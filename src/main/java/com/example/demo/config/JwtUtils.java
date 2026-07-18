@@ -13,11 +13,11 @@ import java.util.Date;
 @Component
 public class JwtUtils {
 
-    // Đã dùng đúng @Value của Spring Boot
+    // Kéo cấu hình khóa bí mật từ application.properties
     @Value("${app.jwt.secret}")
     private String jwtSecret;
 
-    // Kéo cấu hình thời gian sống lên
+    // Kéo cấu hình thời gian sống của token từ application.properties
     @Value("${app.jwt.expirationMs}")
     private int jwtExpirationMs;
 
@@ -27,19 +27,20 @@ public class JwtUtils {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    // Xóa tham số password, chỉ nhận username để in lên thẻ
+    // 1. HÀM IN THẺ (Sinh Token khi user đăng nhập thành công)
     public String generateJwtToken(String username) {
         return Jwts.builder()
                 .subject(username) // In tên người dùng lên thẻ
                 .issuedAt(new Date()) // Thời điểm in thẻ
                 .expiration(new Date((new Date()).getTime() + jwtExpirationMs)) // Hạn sử dụng
-                .signWith(getSigningKey()) // Đóng dấu đỏ!
-                .compact(); // Nén lại thành chuỗi Text
+                .signWith(getSigningKey()) // Đóng dấu đỏ bảo mật
+                .compact(); // Nén lại thành chuỗi Text JWT
     }
 
+    // 2. HÀM ĐỌC THẺ (Lấy tên người dùng từ Token gửi lên)
     public String getUserNameFromJwtToken(String token) {
         return Jwts.parser()
-                .verifyWith(getSigningKey()) // Dùng đúng con dấu để quét
+                .verifyWith(getSigningKey()) // Dùng đúng con dấu để quét và bóc niêm phong
                 .build()
                 .parseSignedClaims(token)
                 .getPayload()
